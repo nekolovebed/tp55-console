@@ -13,6 +13,13 @@ EPZ TP55 小尾巴的本地调音工具。替代官方网页版 `peq.epzsz.com`�
 | Windows | `TP55-Console-1.0-win-x64.zip` | 解压后运行 `TP55 Console.exe`，整个文件夹需保留 |
 | Android | `TP55-Console-1.0-android.apk` | Android 8.0+，允许安装未知来源应用即可 |
 
+## 界面
+
+<p align="center">
+  <img src="docs/screenshots/eq-android.png" width="300" alt="Android 均衡器" />
+  <img src="docs/screenshots/band-edit-android.png" width="300" alt="频段编辑" />
+</p>
+
 ## 功能
 
 - **10 段参数均衡器**：峰值 / 低架 / 高架 / 低通 / 高通，20 Hz – 20 kHz，±12 dB，Q 0.1 – 10
