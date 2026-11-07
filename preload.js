@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld('tp55', {
 
   sendRaw: (hex) => ipcRenderer.invoke('device:raw', { hex }),
 
+  sysInfo: () => ipcRenderer.invoke('sys:info'),
+  keepAliveStatus: () => ipcRenderer.invoke('keepalive:status'),
+  keepAliveStart: () => ipcRenderer.invoke('keepalive:start'),
+  keepAliveStop: () => ipcRenderer.invoke('keepalive:stop'),
+
   exportFile: (payload) => ipcRenderer.invoke('file:export', payload),
   importFile: (payload) => ipcRenderer.invoke('file:import', payload),
 

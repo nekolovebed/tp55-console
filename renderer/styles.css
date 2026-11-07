@@ -1806,3 +1806,242 @@ input[type="range"]:active::-webkit-slider-thumb {
 .disclaimer-wrap.at-bottom::after {
   opacity: 0;
 }
+
+/* ---------------- toolbar ---------------- */
+
+.toolbar {
+  height: 50px;
+  flex: 0 0 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 0 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(10, 13, 19, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.tb-device {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 11.5px;
+  color: var(--text-2);
+  transition: border-color 0.25s, background 0.25s;
+}
+
+.tb-device.online {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+.tb-device.offline {
+  border-color: rgba(248, 113, 113, 0.22);
+  background: rgba(248, 113, 113, 0.05);
+}
+
+.tb-fw {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  padding-left: 7px;
+  border-left: 1px solid var(--line-strong);
+}
+
+.tb-meta {
+  display: flex;
+  gap: 6px;
+}
+
+.tb-badge {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tb-spacer {
+  flex: 1;
+}
+
+.tb-btn {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.16s;
+  white-space: nowrap;
+}
+
+.tb-btn svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+}
+
+.tb-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.tb-btn.active {
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.1);
+  color: #86e8a8;
+}
+
+.tb-btn.primary {
+  background: linear-gradient(135deg, #b79bff 0%, #d7b9ff 45%, #f5cf96 100%);
+  color: #140f22;
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(124, 92, 255, 0.22);
+}
+
+.tb-btn.primary:hover {
+  filter: brightness(1.06);
+}
+
+.tb-btn.primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.tb-state {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dim);
+  margin-left: 2px;
+}
+
+.tb-btn.active .tb-state {
+  background: var(--ok);
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.7);
+}
+
+/* ---------------- popover ---------------- */
+
+.popover {
+  position: fixed;
+  z-index: 150;
+  width: 232px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: rgba(16, 21, 30, 0.98);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  animation: toast-in 0.16s ease;
+}
+
+.pop-item {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pop-item:hover {
+  background: rgba(124, 92, 255, 0.14);
+  color: #fff;
+}
+
+.pop-item b {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pop-item span {
+  font-size: 10.5px;
+  color: var(--dim);
+}
+
+.pop-foot {
+  padding: 7px 10px 5px;
+  font-size: 10px;
+  color: var(--dim);
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+
+/* ---------------- import ---------------- */
+
+.modal.import-modal {
+  width: 600px;
+}
+
+.import-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin: 0 0 12px;
+}
+
+#importText {
+  width: 100%;
+  height: 220px;
+  resize: vertical;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text-2);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  padding: 10px 12px;
+  outline: none;
+}
+
+#importText:focus {
+  border-color: rgba(167, 139, 250, 0.5);
+  background: rgba(124, 92, 255, 0.06);
+}
+
+.modal-foot {
+  justify-content: space-between;
+}
+
+/* 保存过程中锁定编辑，避免 1 秒写入窗口内参数被改动 */
+body.saving .canvas-wrap,
+body.saving .band-rows,
+body.saving .inspector,
+body.saving .preamp-inline,
+body.saving .preset-select {
+  pointer-events: none;
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+
+.tb-btn.primary:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}

@@ -156,6 +156,9 @@ const state = {
   dac: { filter: 1, filterMode: 0, outputMode: 3, balance: 0 },
   mic: 0,
   logs: [],
+  keepAlive: false,
+  sysinfo: null,
+  saving: false,
 };
 
 let pushTimer = null;
@@ -193,7 +196,7 @@ function loadState() {
     const data = JSON.parse(raw);
     if (Array.isArray(data.bands)) state.bands = makeBands(data.bands);
     if (typeof data.offset === 'number') state.offset = clamp(data.offset, -12, 12);
-    if (data.presetId) state.presetId = data.presetId;
+    if (typeof data.presetId === 'string') state.presetId = data.presetId;
     if (data.dac) state.dac = Object.assign(state.dac, data.dac);
     if (typeof data.mic === 'number') state.mic = clamp(data.mic, -12, 12);
   } catch (e) {
@@ -447,7 +450,7 @@ function renderInspector() {
   $('#inspEmpty').hidden = true;
   $('#inspBody').hidden = false;
   $('#inspIndex').textContent = String(state.selected + 1);
-  $('#inspType').value = String(b.type);
+  $('#inspType').value = String(FILTERS.some((f) => f.value === b.type) ? b.type : 2);
   $('#inspFreq').value = String(Math.round(b.freq));
   $('#inspGain').value = b.gain.toFixed(1);
   $('#inspQ').value = b.q.toFixed(2);
@@ -677,7 +680,7 @@ function drawCurves() {
     }
 
     ctx.beginPath();
-    ctx.arc(x, y, isSel ? 6.2 : 5, 0, Math.PI * 2);
+    ctx.arc(x, y, isSel ? 6.8 : 5.6, 0, Math.PI * 2);
     ctx.fillStyle = b.enabled ? (isSel ? '#f7e2b8' : 'rgba(236,240,250,0.9)') : 'rgba(120,128,145,0.6)';
     ctx.fill();
     ctx.lineWidth = 1.6;
@@ -1073,18 +1076,8 @@ async function doExport() {
   if (res && res.ok) toast('已导出到 ' + res.path);
 }
 
-async function doImport() {
-  const res = await window.tp55.importFile({
-    filters: [
-      { name: 'EQ 配置文件', extensions: ['json', 'txt'] },
-      { name: '所有文件', extensions: ['*'] },
-    ],
-  });
-  if (!res || !res.ok) return;
-
-  const text = res.content;
+function parseImportedText(text) {
   let parsed = null;
-
   if (/^\s*\{/.test(text)) {
     try {
       const data = JSON.parse(text);
@@ -1099,9 +1092,14 @@ async function doImport() {
     const fromText = parseEqText(text);
     if (fromText.bands.length) parsed = fromText;
   }
+  return parsed;
+}
+
+function applyImportedText(text) {
+  const parsed = parseImportedText(String(text || ''));
   if (!parsed) {
-    toast('无法解析这个文件，支持 TP55 JSON 或 EqualizerAPO 文本', 'err');
-    return;
+    toast('无法解析，支持 AutoEQ / EqualizerAPO 文本或本工具导出的 JSON', 'err');
+    return false;
   }
 
   state.bands = makeBands(parsed.bands);
@@ -1114,6 +1112,172 @@ async function doImport() {
   selectBand(0, false);
   onBandsChanged();
   toast(`已导入 ${parsed.bands.length} 段参数`);
+  return true;
+}
+
+async function doImport() {
+  const res = await window.tp55.importFile({
+    filters: [
+      { name: 'EQ 配置文件', extensions: ['json', 'txt'] },
+      { name: '所有文件', extensions: ['*'] },
+    ],
+  });
+  if (!res || !res.ok) return;
+  if (applyImportedText(res.content)) {
+    $('#importModal').hidden = true;
+  }
+}
+
+/* ================================================================== */
+/* 系统信息 / 防吞音 / 测试音                                            */
+/* ================================================================== */
+
+function formatRate(rate) {
+  if (!rate) return '—';
+  if (rate >= 1000) {
+    const k = rate / 1000;
+    return `${Number.isInteger(k) ? k : k.toFixed(1)} kHz`;
+  }
+  return `${rate} Hz`;
+}
+
+function updateSysInfo(info) {
+  state.sysinfo = info;
+  const found = !!(info && info.found);
+  const rate = found ? formatRate(info.rate) : '—';
+  const uac = found && info.uac && info.uac !== 'unknown' ? `UAC ${info.uac}` : 'UAC —';
+
+  $('#tbRate').textContent = rate;
+  $('#tbUac').textContent = uac;
+  $('#devRate').textContent = rate;
+  $('#devFormat').textContent = found ? `${info.bits} bit / ${info.ch} ch` : '—';
+  $('#devUac').textContent = found
+    ? info.uac === '2.0'
+      ? 'UAC 2.0'
+      : info.uac === '1.0'
+      ? 'UAC 1.0'
+      : '未知'
+    : '—';
+}
+
+function setKeepAlive(on, persist) {
+  state.keepAlive = !!on;
+  const btn = $('#btnKeepAlive');
+  if (btn) btn.classList.toggle('active', state.keepAlive);
+  if (persist) {
+    try {
+      localStorage.setItem('tp55.keepalive', state.keepAlive ? '1' : '0');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+}
+
+async function toggleKeepAlive() {
+  if (state.keepAlive) {
+    await window.tp55.keepAliveStop();
+    setKeepAlive(false, true);
+    toast('已关闭防吞音');
+    log('防吞音已关闭');
+    return;
+  }
+  const res = await window.tp55.keepAliveStart();
+  if (!res || !res.ok) {
+    toast(res && res.error ? res.error : '启动失败', 'err');
+    return;
+  }
+  setKeepAlive(true, true);
+  toast('防吞音已开启，后台保持音频流');
+  log('防吞音已开启', 'ok');
+}
+
+/* ---- 测试音 ---- */
+
+let audioCtx = null;
+let testStopTimer = null;
+let testNodes = [];
+
+function stopTest() {
+  testNodes.forEach((n) => {
+    try {
+      if (n.stop) n.stop();
+      else n.disconnect();
+    } catch (e) {
+      /* ignore */
+    }
+  });
+  testNodes = [];
+  if (testStopTimer) {
+    clearTimeout(testStopTimer);
+    testStopTimer = null;
+  }
+  const btn = $('#btnTestTone');
+  if (btn) btn.classList.remove('active');
+}
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTest(kind) {
+  stopTest();
+  const ctx = ensureAudio();
+  const master = ctx.createGain();
+  master.gain.value = kind === 'noise' ? 0.05 : 0.09;
+  master.connect(ctx.destination);
+  testNodes.push(master);
+
+  if (kind === 'channel') {
+    const osc = ctx.createOscillator();
+    const pan = ctx.createStereoPanner();
+    osc.frequency.value = 660;
+    osc.connect(pan).connect(master);
+    const now = ctx.currentTime;
+    pan.pan.setValueAtTime(-1, now);
+    pan.pan.setValueAtTime(1, now + 2);
+    osc.start(now);
+    osc.stop(now + 4);
+    testNodes.push(osc);
+    toast('左声道 2 秒 → 右声道 2 秒');
+  } else if (kind === 'noise') {
+    const buffer = ctx.createBuffer(2, Math.floor(ctx.sampleRate * 2), ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch += 1) {
+      const data = buffer.getChannelData(ch);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < data.length; i += 1) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.969 * b2 + white * 0.153852;
+        b3 = 0.8665 * b3 + white * 0.3104856;
+        b4 = 0.55 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.016898;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.09;
+        b6 = white * 0.115926;
+      }
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    src.connect(master);
+    src.start();
+    testNodes.push(src);
+    toast('粉红噪声播放中');
+  } else {
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 1000;
+    osc.type = 'sine';
+    osc.connect(master);
+    osc.start();
+    testNodes.push(osc);
+    toast('1 kHz 正弦播放中');
+  }
+
+  const btn = $('#btnTestTone');
+  if (btn) btn.classList.add('active');
+  testStopTimer = setTimeout(() => stopTest(), kind === 'channel' ? 4200 : 5000);
 }
 
 /* ================================================================== */
@@ -1139,22 +1303,22 @@ function setConnected(s) {
     label.textContent = state.info ? state.info.product : 'TP55';
     if (state.version) {
       fw.hidden = false;
-      $('#fwSep').hidden = false;
       fw.textContent = 'FW ' + state.version;
     }
   } else {
     label.textContent = '未检测到设备';
     fw.hidden = true;
-    $('#fwSep').hidden = true;
   }
 
+  $('#btnSave').disabled = !state.connected && !state.saving;
   $('#sbDevice').innerHTML = `<i class="dot ${state.connected ? 'on' : 'off'}"></i><span>${state.connected ? '设备已连接' : '未连接'}</span>`;
   $('#devDot').className = 'dot ' + (state.connected ? 'on' : 'off');
   $('#devStatusText').textContent = state.connected ? '已连接 · 可实时调节' : '未连接，请插入 TP55';
 
   if (state.info) {
-    $('#devVid').textContent = '0x' + state.info.vid.toString(16).toUpperCase().padStart(4, '0');
-    $('#devPid').textContent = '0x' + state.info.pid.toString(16).toUpperCase().padStart(4, '0');
+    const vid = '0x' + state.info.vid.toString(16).toUpperCase().padStart(4, '0');
+    const pid = '0x' + state.info.pid.toString(16).toUpperCase().padStart(4, '0');
+    $('#devVid').textContent = `${vid} / ${pid}`;
     $('#devSn').textContent = state.info.serial || '—';
   }
   $('#devFw').textContent = state.version || '—';
@@ -1177,10 +1341,11 @@ function bindDeviceEvents() {
       if (!ev.version) return;
       state.version = ev.version;
       $('#fwLabel').hidden = false;
-      $('#fwSep').hidden = false;
       $('#fwLabel').textContent = 'FW ' + ev.version;
       $('#devFw').textContent = ev.version;
       log('固件版本：' + ev.version, 'ok');
+    } else if (ev.type === 'sysinfo') {
+      updateSysInfo(ev.info);
     } else if (ev.type === 'dacState') {
       Object.assign(state.dac, ev.state);
       syncDacUi();
@@ -1376,6 +1541,10 @@ function switchPage(page) {
 async function init() {
   loadState();
 
+  // 参数与预设不一致时（历史状态或外部导入），标记为自定义
+  const isFlatNow = state.bands.every((b) => b.gain === 0) && state.offset === 0;
+  if (state.presetId === 'flat' && !isFlatNow) state.presetId = '';
+
   // 表格/预设
   renderTable();
   bindTable();
@@ -1384,6 +1553,7 @@ async function init() {
   $('#presetSelect').value = state.presetId && allPresets().some((p) => p.id === state.presetId) ? state.presetId : '';
   $('#preamp').value = String(state.offset);
   $('#preampVal').textContent = `${state.offset > 0 ? '+' : ''}${state.offset.toFixed(1)} dB`;
+  $('#inspType').innerHTML = FILTERS.map((f) => `<option value="${f.value}">${f.name}</option>`).join('');
   renderInspector();
 
   // DAC / MIC 回填
@@ -1405,7 +1575,9 @@ async function init() {
       return;
     }
     const btn = $('#btnSave');
+    state.saving = true;
     btn.disabled = true;
+    document.body.classList.add('saving');
     btn.querySelector('.btn-label').textContent = '写入中…';
     btn.querySelector('.btn-spinner').hidden = false;
     try {
@@ -1417,13 +1589,62 @@ async function init() {
     } catch (e) {
       toast('保存失败：' + (e.message || e), 'err');
     } finally {
-      btn.disabled = false;
+      state.saving = false;
+      document.body.classList.remove('saving');
+      btn.disabled = !state.connected;
       btn.querySelector('.btn-label').textContent = '保存到设备';
       btn.querySelector('.btn-spinner').hidden = true;
     }
   });
 
-  $('#btnImport').addEventListener('click', doImport);
+  // 工具栏
+  $('#btnImport').addEventListener('click', () => {
+    $('#importText').value = '';
+    $('#importModal').hidden = false;
+    setTimeout(() => $('#importText').focus(), 60);
+  });
+  $('#btnCloseImport').addEventListener('click', () => ($('#importModal').hidden = true));
+  $('#importModal').addEventListener('click', (e) => {
+    if (e.target.id === 'importModal') $('#importModal').hidden = true;
+  });
+  $('#btnImportApply').addEventListener('click', () => {
+    const text = $('#importText').value.trim();
+    if (!text) {
+      toast('请先粘贴参数文本', 'err');
+      return;
+    }
+    if (applyImportedText(text)) $('#importModal').hidden = true;
+  });
+  $('#btnImportFile').addEventListener('click', doImport);
+
+  $('#btnKeepAlive').addEventListener('click', toggleKeepAlive);
+
+  // 测试音弹层
+  $('#btnTestTone').addEventListener('click', (e) => {
+    const pop = $('#testPopover');
+    if (!pop.hidden) {
+      pop.hidden = true;
+      stopTest();
+      return;
+    }
+    const r = e.currentTarget.getBoundingClientRect();
+    pop.hidden = false;
+    pop.style.top = `${Math.round(r.bottom + 8)}px`;
+    pop.style.left = `${Math.round(Math.min(r.left - 60, window.innerWidth - 250))}px`;
+  });
+  $$('.pop-item', $('#testPopover')).forEach((b) => {
+    b.addEventListener('click', () => {
+      playTest(b.dataset.test);
+      $('#testPopover').hidden = true;
+    });
+  });
+  document.addEventListener('click', (e) => {
+    const pop = $('#testPopover');
+    if (pop.hidden) return;
+    if (e.target.closest('#testPopover') || e.target.closest('#btnTestTone')) return;
+    pop.hidden = true;
+  });
+
   $('#btnExport').addEventListener('click', doExport);
 
   $('#btnFlat').addEventListener('click', async () => {
@@ -1502,6 +1723,24 @@ async function init() {
   try {
     const s = await window.tp55.status();
     setConnected(s);
+  } catch (e) {
+    /* ignore */
+  }
+
+  // 系统音频信息
+  try {
+    const info = await window.tp55.sysInfo();
+    if (info) updateSysInfo(info);
+  } catch (e) {
+    /* ignore */
+  }
+
+  // 恢复上次的防吞音开关
+  try {
+    if (localStorage.getItem('tp55.keepalive') === '1') {
+      const res = await window.tp55.keepAliveStart();
+      setKeepAlive(!!(res && res.ok), false);
+    }
   } catch (e) {
     /* ignore */
   }

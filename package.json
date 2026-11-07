@@ -1,6 +1,6 @@
 {
   "name": "tp55-console",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "EPZ TP55 本地调音台 — 10 段 PEQ / DAC / 麦克风控制，无需登录",
   "main": "main.js",
   "author": "",
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "dist": "electron-packager . \"TP55 Console\" --platform=win32 --arch=x64 --out=dist --overwrite --asar.unpack=\"**/*.node\" --icon=assets/icon.ico --app-version=1.0.0 --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/README\\.md\" --ignore=\"^/assets/icon\\.html\""
+    "dist": "electron-packager . \"TP55 Console\" --platform=win32 --arch=x64 --out=dist --overwrite --asar.unpack=\"**/*.node\" --icon=assets/icon.ico --app-version=1.1.0 --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/release\" --ignore=\"^/README\\.md\" --ignore=\"^/assets/icon\\.html\" --ignore=\"^/win-\" --ignore=\"^/diag\" --ignore=\"\\.gradle\" --ignore=\"\\.workbuddy\" --ignore=\"\\.gitignore\""
   },
   "dependencies": {
     "node-hid": "^3.4.0"

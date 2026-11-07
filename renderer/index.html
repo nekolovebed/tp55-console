@@ -21,14 +21,7 @@
       </div>
     </div>
 
-    <div class="titlebar-center">
-      <div class="device-pill" id="devicePill">
-        <span class="dot" id="deviceDot"></span>
-        <span id="deviceLabel">正在查找设备…</span>
-        <span class="pill-sep" id="fwSep" hidden></span>
-        <span class="pill-fw" id="fwLabel" hidden></span>
-      </div>
-    </div>
+    <div class="titlebar-center"></div>
 
     <div class="win-controls">
       <button class="win-btn" id="btnMin" title="最小化">
@@ -42,6 +35,42 @@
       </button>
     </div>
   </header>
+
+  <div class="toolbar">
+    <div class="tb-device" id="devicePill">
+      <span class="dot" id="deviceDot"></span>
+      <span id="deviceLabel">正在查找设备…</span>
+      <span class="tb-fw" id="fwLabel" hidden></span>
+    </div>
+
+    <div class="tb-meta">
+      <span class="tb-badge" id="tbRate">—</span>
+      <span class="tb-badge" id="tbUac">UAC —</span>
+    </div>
+
+    <div class="tb-spacer"></div>
+
+    <button class="tb-btn" id="btnKeepAlive" title="保持音频流，避免 DAC 空闲吞掉开头的声音">
+      <svg viewBox="0 0 20 20"><path d="M3 10h3l2-5 3 10 2.5-6 1.5 3h2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>防吞音</span>
+      <i class="tb-state" id="keepAliveDot"></i>
+    </button>
+
+    <button class="tb-btn" id="btnTestTone" title="播放测试信号">
+      <svg viewBox="0 0 20 20"><path d="M4 8v4h3l4 3V5L7 8H4Z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/><path d="M14 7.5a3.5 3.5 0 0 1 0 5M16.2 5.4a6.5 6.5 0 0 1 0 9.2" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>
+      <span>测试音</span>
+    </button>
+
+    <button class="tb-btn" id="btnImport" title="导入 EQ 参数">
+      <svg viewBox="0 0 20 20"><path d="M10 3v9m0 0 3.2-3.2M10 12 6.8 8.8M4 14.5v1.2A1.3 1.3 0 0 0 5.3 17h9.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      <span>导入</span>
+    </button>
+
+    <button class="tb-btn primary" id="btnSave">
+      <span class="btn-label">保存到设备</span>
+      <span class="btn-spinner" hidden></span>
+    </button>
+  </div>
 
   <div class="body">
     <nav class="sidebar">
@@ -77,19 +106,11 @@
             <p>拖动曲线上的节点调整频率与增益，滚轮调整 Q 值，双击复位。</p>
           </div>
           <div class="page-actions">
-            <button class="btn ghost" id="btnImport">
-              <svg viewBox="0 0 20 20"><path d="M10 3v9m0 0 3.2-3.2M10 12 6.8 8.8M4 14.5v1.2A1.3 1.3 0 0 0 5.3 17h9.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
-              导入
-            </button>
             <button class="btn ghost" id="btnExport">
               <svg viewBox="0 0 20 20"><path d="M10 13V4m0 0 3.2 3.2M10 4 6.8 7.2M4 14.5v1.2A1.3 1.3 0 0 0 5.3 17h9.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
               导出
             </button>
             <button class="btn ghost danger-hover" id="btnFlat">清零</button>
-            <button class="btn primary" id="btnSave">
-              <span class="btn-label">保存到设备</span>
-              <span class="btn-spinner" hidden></span>
-            </button>
           </div>
         </div>
 
@@ -282,9 +303,11 @@
                   <span id="devStatusText">未连接</span>
                 </div>
                 <div class="kv-grid">
-                  <div><span>VID</span><b id="devVid">—</b></div>
-                  <div><span>PID</span><b id="devPid">—</b></div>
+                  <div><span>采样率</span><b id="devRate">—</b></div>
+                  <div><span>位深 / 声道</span><b id="devFormat">—</b></div>
+                  <div><span>USB 模式</span><b id="devUac">—</b></div>
                   <div><span>固件</span><b id="devFw">—</b></div>
+                  <div><span>VID / PID</span><b id="devVid">—</b></div>
                   <div><span>序列号</span><b id="devSn">—</b></div>
                 </div>
               </div>
@@ -428,6 +451,41 @@
     <div class="modal-foot">
       <button class="btn ghost" id="confirmCancel">取消</button>
       <button class="btn primary" id="confirmOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="popover" id="testPopover" hidden>
+  <button class="pop-item" data-test="sine">
+    <b>1 kHz 正弦</b>
+    <span>检查音量与基础音准</span>
+  </button>
+  <button class="pop-item" data-test="noise">
+    <b>粉红噪声</b>
+    <span>检查整体频响平衡</span>
+  </button>
+  <button class="pop-item" data-test="channel">
+    <b>左右声道</b>
+    <span>依次播放左、右声道</span>
+  </button>
+  <div class="pop-foot">播放 5 秒后自动停止，注意音量</div>
+</div>
+
+<div class="modal-backdrop" id="importModal" hidden>
+  <div class="modal import-modal">
+    <div class="modal-head">
+      <h2>导入 EQ 参数</h2>
+      <button class="win-btn" id="btnCloseImport" title="关闭">
+        <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="import-hint">粘贴 AutoEQ / EqualizerAPO 文本，或从文件选择。只解析你自己提供的参数，不包含任何官方数据。</p>
+      <textarea id="importText" spellcheck="false" placeholder="Preamp: -6.0 dB&#10;Filter 1: ON PK Fc 1000 Hz Gain 3.0 dB Q 1.0&#10;Filter 2: ON LS Fc 80 Hz Gain 5.0 dB Q 0.7"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="btnImportFile">从文件导入</button>
+      <button class="btn primary" id="btnImportApply">解析并应用</button>
     </div>
   </div>
 </div>

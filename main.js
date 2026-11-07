@@ -4,10 +4,27 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Tp55Device } = require('./lib/device');
+const { SysInfo } = require('./lib/sysinfo');
+const { KeepAlive } = require('./lib/keepalive');
 
 let win = null;
 let device = new Tp55Device();
 let autoTimer = null;
+let sysInfo = new SysInfo();
+let keepAlive = new KeepAlive();
+
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.show();
+      win.focus();
+    }
+  });
+}
 
 function send(channel, payload) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
@@ -129,10 +146,13 @@ device.on('micState', (v) => send('device:event', { type: 'micState', value: v }
 device.on('band', (b) => send('device:event', { type: 'band', band: b }));
 device.on('error', (e) => send('device:event', { type: 'error', message: String(e && e.message ? e.message : e) }));
 
+sysInfo.on('update', (info) => send('device:event', { type: 'sysinfo', info }));
+
 app.whenReady().then(() => {
   createWindow();
   setTimeout(tryConnect, 400);
   startAutoConnect();
+  sysInfo.start();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -150,11 +170,39 @@ app.on('before-quit', () => {
   } catch (e) {
     /* ignore */
   }
+  try {
+    sysInfo.stop();
+  } catch (e) {
+    /* ignore */
+  }
+  try {
+    keepAlive.stop();
+  } catch (e) {
+    /* ignore */
+  }
 });
 
 /* ------------------------------------------------------------------ */
 /* IPC                                                                 */
 /* ------------------------------------------------------------------ */
+
+ipcMain.handle('sys:info', () => sysInfo.get());
+
+ipcMain.handle('keepalive:status', () => keepAlive.status());
+
+ipcMain.handle('keepalive:start', () => {
+  try {
+    keepAlive.start();
+    return { ok: true, ...keepAlive.status() };
+  } catch (e) {
+    return { ok: false, error: String(e.message || e), ...keepAlive.status() };
+  }
+});
+
+ipcMain.handle('keepalive:stop', () => {
+  keepAlive.stop();
+  return { ok: true, ...keepAlive.status() };
+});
 
 ipcMain.handle('device:status', () => status());
 
