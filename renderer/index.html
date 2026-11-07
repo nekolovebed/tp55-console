@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EPZ TP55 Console</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+  <header class="titlebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 4.5h9.5a4.5 4.5 0 0 1 0 9H9.5v6H6V4.5Zm3.5 3v3h6a1.5 1.5 0 0 0 0-3h-6Z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">EPZ <b>TP55</b></span>
+        <span class="brand-sub">CONTROL CONSOLE</span>
+      </div>
+    </div>
+
+    <div class="titlebar-center">
+      <div class="device-pill" id="devicePill">
+        <span class="dot" id="deviceDot"></span>
+        <span id="deviceLabel">正在查找设备…</span>
+        <span class="pill-sep" id="fwSep" hidden></span>
+        <span class="pill-fw" id="fwLabel" hidden></span>
+      </div>
+    </div>
+
+    <div class="win-controls">
+      <button class="win-btn" id="btnMin" title="最小化">
+        <svg viewBox="0 0 12 12"><path d="M2.5 6h7" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+      </button>
+      <button class="win-btn" id="btnMax" title="最大化">
+        <svg viewBox="0 0 12 12"><rect x="2.6" y="2.6" width="6.8" height="6.8" rx="1.2" stroke="currentColor" stroke-width="1.1" fill="none"/></svg>
+      </button>
+      <button class="win-btn close" id="btnClose" title="关闭">
+        <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="body">
+    <nav class="sidebar">
+      <button class="nav-item active" data-page="eq" title="参数均衡器">
+        <svg viewBox="0 0 24 24"><path d="M4 16.5c2.2 0 3-8.5 5.4-8.5 2.3 0 2.1 9 4.3 9 2.3 0 2.4-11 4.1-11 1.4 0 1.8 5.5 2.2 5.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+        <span>EQ</span>
+      </button>
+      <button class="nav-item" data-page="dac" title="DAC 设置">
+        <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h10M18 17h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="7" r="2.1" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="10" cy="12" r="2.1" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="16" cy="17" r="2.1" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+        <span>DAC</span>
+      </button>
+      <button class="nav-item" data-page="mic" title="麦克风">
+        <svg viewBox="0 0 24 24"><rect x="9" y="3.5" width="6" height="10" rx="3" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3.5M9 20.5h6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+        <span>MIC</span>
+      </button>
+      <button class="nav-item" data-page="device" title="设备信息">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M9 9h6M9 12.5h6M9 16h3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>设备</span>
+      </button>
+      <div class="nav-spacer"></div>
+      <button class="nav-item subtle" id="btnPresetLib" title="预设库">
+        <svg viewBox="0 0 24 24"><path d="M5 5.5h14v13.2l-7-3.4-7 3.4V5.5Z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>
+        <span>预设</span>
+      </button>
+    </nav>
+
+    <main class="main">
+      <!-- ============ EQ ============ -->
+      <section class="page active" id="page-eq">
+        <div class="page-head">
+          <div>
+            <h1>参数均衡器 <span class="h1-badge">10 BAND</span></h1>
+            <p>拖动曲线上的节点调整频率与增益，滚轮调整 Q 值，双击复位。</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn ghost" id="btnImport">
+              <svg viewBox="0 0 20 20"><path d="M10 3v9m0 0 3.2-3.2M10 12 6.8 8.8M4 14.5v1.2A1.3 1.3 0 0 0 5.3 17h9.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+              导入
+            </button>
+            <button class="btn ghost" id="btnExport">
+              <svg viewBox="0 0 20 20"><path d="M10 13V4m0 0 3.2 3.2M10 4 6.8 7.2M4 14.5v1.2A1.3 1.3 0 0 0 5.3 17h9.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+              导出
+            </button>
+            <button class="btn ghost danger-hover" id="btnFlat">清零</button>
+            <button class="btn primary" id="btnSave">
+              <span class="btn-label">保存到设备</span>
+              <span class="btn-spinner" hidden></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="eq-top">
+          <section class="card graph-card">
+            <div class="graph-head">
+              <div class="preamp-inline">
+                <label for="preamp">前置增益</label>
+                <input type="range" id="preamp" min="-12" max="12" step="0.5" value="0" />
+                <output id="preampVal">0.0 dB</output>
+              </div>
+              <div class="graph-legend">
+                <span><i class="lg-total"></i>合成响应</span>
+                <span><i class="lg-band"></i>选中频段</span>
+              </div>
+            </div>
+            <div class="canvas-wrap" id="canvasWrap">
+              <canvas id="eqCanvas"></canvas>
+              <div class="tooltip" id="tooltip" hidden></div>
+            </div>
+            <div class="graph-foot">
+              <span id="cursorReadout">20 Hz — 20 kHz</span>
+              <span class="muted">采样率 96 kHz · 每段独立 biquad</span>
+            </div>
+          </section>
+
+          <aside class="eq-side">
+            <div class="side-block">
+              <div class="side-title">当前预设</div>
+              <select id="presetSelect" class="preset-select"></select>
+              <div class="side-actions">
+                <button class="mini-btn" id="btnSavePreset">保存为预设</button>
+                <button class="mini-btn" id="btnDeletePreset">删除</button>
+              </div>
+            </div>
+            <div class="side-block grow">
+              <div class="side-title">选中频段</div>
+              <div class="inspector" id="inspector">
+                <div class="insp-empty" id="inspEmpty">在曲线上或下方表格中选择一个频段</div>
+                <div class="insp-body" id="inspBody" hidden>
+                  <div class="insp-head">
+                    <span class="insp-index" id="inspIndex">1</span>
+                    <select id="inspType" class="type-select"></select>
+                    <button class="icon-btn" id="inspZero" title="重置该段增益">
+                      <svg viewBox="0 0 16 16"><path d="M3.2 8a4.8 4.8 0 1 1 1.5 3.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M3 4.2V8h3.6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="insp-row">
+                    <label>频率</label>
+                    <input type="number" id="inspFreq" min="20" max="20000" step="1" />
+                    <span class="unit">Hz</span>
+                  </div>
+                  <div class="insp-row">
+                    <label>增益</label>
+                    <input type="number" id="inspGain" min="-12" max="12" step="0.1" />
+                    <span class="unit">dB</span>
+                  </div>
+                  <div class="insp-row">
+                    <label>Q 值</label>
+                    <input type="number" id="inspQ" min="0.1" max="10" step="0.01" />
+                  </div>
+                  <div class="insp-slider">
+                    <input type="range" id="inspGainRange" min="-12" max="12" step="0.1" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section class="card band-card">
+          <div class="band-head">
+            <span class="col-sw">启用</span>
+            <span class="col-idx">#</span>
+            <span class="col-type">类型</span>
+            <span class="col-freq">频率</span>
+            <span class="col-gain">增益</span>
+            <span class="col-q">Q 值</span>
+            <span class="col-curve">响应</span>
+          </div>
+          <div class="band-rows" id="bandRows"></div>
+        </section>
+      </section>
+
+      <!-- ============ DAC ============ -->
+      <section class="page" id="page-dac">
+        <div class="page-head">
+          <div>
+            <h1>DAC 设置</h1>
+            <p>数字滤波器、工作模式与输出配置，调整后立即写入设备。</p>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <section class="card setting-card">
+            <div class="setting-title">数字滤波器</div>
+            <div class="setting-desc">不同滤波器的滚降速度与相位特性不同，按听感选择。</div>
+            <div class="option-list" id="filterList">
+              <button class="option" data-value="1"><b>FAST-LL</b><span>陡降 · 低延迟</span></button>
+              <button class="option" data-value="2"><b>FAST-PC</b><span>陡降 · 相位补偿</span></button>
+              <button class="option" data-value="3"><b>SLOW-LL</b><span>缓降 · 低延迟</span></button>
+              <button class="option" data-value="4"><b>SLOW-PC</b><span>缓降 · 相位补偿</span></button>
+              <button class="option" data-value="5"><b>NON-OS</b><span>非过采样</span></button>
+            </div>
+          </section>
+
+          <section class="card setting-card">
+            <div class="setting-title">工作模式</div>
+            <div class="setting-desc">CLASS-AB 与 CLASS-H 的输出级工作方式，影响功耗与听感。</div>
+            <div class="option-list horizontal" id="workModeList">
+              <button class="option" data-value="0"><b>CLASS-AB</b><span>标准模式</span></button>
+              <button class="option" data-value="1"><b>CLASS-H</b><span>高摆幅模式</span></button>
+            </div>
+
+            <div class="setting-title mt">输出增益</div>
+            <div class="setting-desc">对应机身高低增益拨杆的输出档位。</div>
+            <div class="option-list horizontal" id="outputModeList">
+              <button class="option" data-value="1"><b>低</b><span>LOW</span></button>
+              <button class="option" data-value="2"><b>中</b><span>MID</span></button>
+              <button class="option" data-value="3"><b>高</b><span>HIGH</span></button>
+            </div>
+          </section>
+
+          <section class="card setting-card full">
+            <div class="setting-title">声道平衡</div>
+            <div class="setting-desc">正值向右偏移，负值向左偏移，0 为居中。</div>
+            <div class="balance-wrap">
+              <span class="bal-side">L</span>
+              <input type="range" id="balanceRange" min="-12" max="12" step="1" value="0" />
+              <span class="bal-side">R</span>
+              <output id="balanceVal">居中</output>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ MIC ============ -->
+      <section class="page" id="page-mic">
+        <div class="page-head">
+          <div>
+            <h1>麦克风</h1>
+            <p>3.5mm 接口的麦克风输入增益。带麦线控耳机通话、录音时使用。</p>
+          </div>
+        </div>
+        <section class="card setting-card">
+          <div class="setting-title">麦克风增益</div>
+          <div class="mic-slider-wrap">
+            <input type="range" id="micRange" min="-12" max="12" step="1" value="0" />
+            <output id="micVal">0 dB</output>
+          </div>
+          <div class="mic-scale"><span>-12</span><span>0</span><span>+12</span></div>
+          <button class="btn ghost" id="btnMicSave">写入并保存</button>
+        </section>
+      </section>
+
+      <!-- ============ DEVICE ============ -->
+      <section class="page" id="page-device">
+        <div class="page-head">
+          <div>
+            <h1>设备</h1>
+            <p>连接状态、固件信息与维护操作。</p>
+          </div>
+        </div>
+
+        <div class="device-grid">
+          <section class="card device-card">
+            <div class="device-hero">
+              <div class="device-art">
+                <div class="device-art-glow"></div>
+                <svg viewBox="0 0 120 200">
+                  <defs>
+                    <linearGradient id="tp55grad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#8b5cf6"/>
+                      <stop offset="0.55" stop-color="#c084fc"/>
+                      <stop offset="1" stop-color="#f5c06b"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="38" y="10" width="44" height="180" rx="13" fill="url(#tp55grad)" opacity="0.92"/>
+                  <rect x="44" y="26" width="32" height="64" rx="6" fill="#0a0c10" opacity="0.32"/>
+                  <rect x="52" y="6" width="16" height="4" rx="2" fill="#1b1f27"/>
+                  <rect x="47" y="110" width="26" height="3" rx="1.5" fill="#0a0c10" opacity="0.26"/>
+                  <circle cx="60" cy="152" r="9" fill="#0a0c10" opacity="0.22"/>
+                </svg>
+              </div>
+              <div class="device-meta">
+                <div class="device-name" id="devName">EPZ TP55</div>
+                <div class="device-tagline">双 CS43198 · 10 段 PEQ · USB DAC</div>
+                <div class="device-status-line">
+                  <span class="dot" id="devDot"></span>
+                  <span id="devStatusText">未连接</span>
+                </div>
+                <div class="kv-grid">
+                  <div><span>VID</span><b id="devVid">—</b></div>
+                  <div><span>PID</span><b id="devPid">—</b></div>
+                  <div><span>固件</span><b id="devFw">—</b></div>
+                  <div><span>序列号</span><b id="devSn">—</b></div>
+                </div>
+              </div>
+            </div>
+            <div class="device-actions">
+              <button class="btn ghost" id="btnReconnect">重新连接</button>
+              <button class="btn ghost" id="btnReadFw">读取固件版本</button>
+              <button class="btn ghost danger-hover" id="btnFactory">恢复出厂 EQ</button>
+            </div>
+          </section>
+
+          <section class="card log-card">
+            <div class="log-head">
+              <span>运行日志</span>
+              <button class="mini-btn" id="btnClearLog">清空</button>
+            </div>
+            <div class="log-list" id="logList"></div>
+          </section>
+        </div>
+
+        <div class="device-notes">
+          <section class="card setting-card">
+            <div class="setting-title">使用提示</div>
+            <div class="note-list">
+              <div class="note"><b>实时试听</b><span>拖动节点或修改参数会立即写入设备的运行内存，不写入 Flash。</span></div>
+              <div class="note"><b>保存</b><span>点击右上角「保存到设备」才会写入 Flash，拔插后依然保留。</span></div>
+              <div class="note"><b>启动同步</b><span>程序连接设备后会自动下发上次使用的调音，保证界面与听感一致。</span></div>
+              <div class="note"><b>快捷键</b><span>Ctrl / Cmd + S 保存，Esc 关闭弹窗。</span></div>
+            </div>
+          </section>
+          <section class="card setting-card">
+            <div class="setting-title">版本说明</div>
+            <div class="about-list">
+              <div><span>应用</span><b>TP55 Console 1.0</b></div>
+              <div><span>协议</span><b>CB HID · report 0x4B</b></div>
+              <div><span>EQ</span><b>10 段 biquad · 30-bit · 96 kHz</b></div>
+            </div>
+            <p class="footnote">本程序为第三方本地工具，直接通过 HID 与设备通信，无需登录、不上传任何数据。调整 EQ 会改变声音输出，请从小幅度开始。</p>
+          </section>
+        </div>
+
+        <section class="card setting-card disclaimer-card">
+          <div class="disclaimer-row">
+            <div class="disclaimer-text">
+              <div class="setting-title">免责声明</div>
+              <p class="footnote">本程序为第三方非官方工具，通过 HID 直接向设备的 DSP 与 Flash 写入参数。调整均衡器、保存配置等操作存在设备配置异常、听力损伤等风险，请在使用前完整阅读条款。</p>
+            </div>
+            <button class="btn ghost" id="btnDisclaimer">查看完整声明</button>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <footer class="statusbar">
+    <span class="sb-item" id="sbDevice"><i class="dot"></i><span>未连接</span></span>
+    <span class="sb-item" id="sbDirty" hidden><i class="dirty-dot"></i><span>有未保存的更改</span></span>
+    <span class="sb-spacer"></span>
+    <span class="sb-item dim" id="sbLast">就绪</span>
+  </footer>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<div class="modal-backdrop" id="presetModal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2>预设库</h2>
+      <button class="win-btn" id="btnClosePresets">
+        <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="preset-group">
+        <div class="preset-group-title">内置预设</div>
+        <div class="preset-grid" id="factoryPresets"></div>
+      </div>
+      <div class="preset-group">
+        <div class="preset-group-title">我的预设</div>
+        <div class="preset-grid" id="userPresets"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="disclaimerModal" hidden>
+  <div class="modal disclaimer">
+    <div class="modal-head">
+      <h2>免责声明与使用条款</h2>
+      <button class="win-btn" id="btnCloseDisclaimer" title="关闭">
+        <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+      </button>
+    </div>
+    <div class="disclaimer-wrap">
+      <div class="modal-body disclaimer-body" id="disclaimerBody">
+      <div class="disclaimer-meta">版本 1.0 · 更新于 2026 年 11 月 7 日</div>
+
+      <h3>一、非官方工具</h3>
+      <p>本程序为个人独立开发的第三方本地调试工具，并非 EPZ 官方软件，与 EPZ 及其关联公司不存在任何隶属、授权、合作或背书关系。程序中出现的「EPZ」「TP55」等名称与标识仅用于说明兼容设备，相关商标归其权利人所有。</p>
+
+      <h3>二、工作原理与固有风险</h3>
+      <p>本程序通过 USB HID 接口直接向 TP55 的 DSP 与 Flash 写入均衡器参数及配置，属于对硬件的底层操作。主要功能虽已在固件 1.4 上完成验证，但仍可能因固件版本差异、设备个体差异、写入过程中断（拔线、断电、系统休眠）等原因，导致参数异常、配置丢失或设备无响应。此类风险由使用者自行承担。</p>
+
+      <h3>三、听力与设备安全</h3>
+      <p>均衡器会改变输出频响与电平。对某些频段（尤其是低频）施加较大增益可能引起削波与失真，在高音量下可能损伤听力或耳机单元。请从小幅度开始调整并控制回放音量；提升某频段时，建议同时使用前置增益做整体衰减。</p>
+
+      <h3>四、Flash 写入寿命</h3>
+      <p>「保存到设备」会将参数写入设备 Flash，而 Flash 存在擦写次数限制。日常试听请使用实时调节（仅写入运行内存），待调音定型后再执行保存，避免频繁写入。</p>
+
+      <h3>五、数据与隐私</h3>
+      <p>本程序完全离线运行，不收集、不上传任何数据，不包含遥测、统计或广告组件。你的调音配置与使用偏好仅保存在本机应用数据目录，不会离开这台电脑。</p>
+
+      <h3>六、无担保与责任限制</h3>
+      <p>本程序按「现状」提供，不附带任何明示或暗示的担保，包括但不限于适销性、特定用途适用性与不侵权担保。在法律允许的最大范围内，作者不对因使用或无法使用本程序而导致的任何直接、间接、偶然或后果性损失承担责任，包括但不限于设备损坏、数据丢失、听力损伤或收益损失。</p>
+
+      <h3>七、协议来源与兼容性</h3>
+      <p>设备通信协议来自对官方网页前端代码的互操作性分析，仅用于实现与自有设备的兼容。若官方更新固件或修改协议，本程序可能部分或全部失效，作者无义务持续跟进或提供更新。</p>
+
+      <h3>八、第三方组件</h3>
+      <p>本程序基于 Electron 构建，内含 Chromium、Node.js 等开源组件，其版权与许可条款见安装目录中的 LICENSE 与 LICENSES.chromium.html，使用本程序即表示你同时遵守上述许可。</p>
+
+      <h3>九、条款接受与效力</h3>
+      <p>继续使用即表示你已阅读、理解并同意上述全部条款。如不同意，请停止使用并删除本程序及其全部副本。若本条款中任何部分被认定为无效或不可执行，其余条款仍然有效；本条款不排除或限制依据适用法律不可排除或限制的责任。</p>
+      </div>
+    </div>
+    <div class="modal-foot disclaimer-foot">
+      <span class="foot-hint" id="disclaimerHint">↓ 向下滚动阅读完整条款</span>
+      <button class="btn ghost" id="btnExitApp">退出程序</button>
+      <button class="btn primary" id="btnAcceptDisclaimer">我已阅读并同意</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="confirmModal" hidden>
+  <div class="modal small">
+    <div class="modal-head"><h2 id="confirmTitle">确认</h2></div>
+    <div class="modal-body">
+      <p id="confirmText"></p>
+      <input id="confirmInput" class="modal-input" hidden />
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="confirmCancel">取消</button>
+      <button class="btn primary" id="confirmOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<script src="dsp.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

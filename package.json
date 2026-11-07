@@ -1,0 +1,21 @@
+{
+  "name": "tp55-console",
+  "version": "1.0.0",
+  "description": "EPZ TP55 本地调音台 — 10 段 PEQ / DAC / 麦克风控制，无需登录",
+  "main": "main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist": "electron-packager . \"TP55 Console\" --platform=win32 --arch=x64 --out=dist --overwrite --asar.unpack=\"**/*.node\" --icon=assets/icon.ico --app-version=1.0.0 --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/README\\.md\" --ignore=\"^/assets/icon\\.html\""
+  },
+  "dependencies": {
+    "node-hid": "^3.4.0"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-packager": "^17.1.2"
+  },
+  "productName": "TP55 Console"
+}
