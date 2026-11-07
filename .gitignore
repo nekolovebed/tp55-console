@@ -30,3 +30,6 @@ selftest*
 
 # workspace memory
 .workbuddy/
+
+# release build artifacts
+release/
