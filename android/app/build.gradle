@@ -1,0 +1,44 @@
+plugins {
+    id 'com.android.application'
+}
+
+def keystoreFile = file("../keystore/tp55.jks")
+
+android {
+    namespace 'com.tp55.console'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.tp55.console'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreFile.exists()) {
+                storeFile keystoreFile
+                storePassword 'tp55console'
+                keyAlias 'tp55'
+                keyPassword 'tp55console'
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            if (keystoreFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

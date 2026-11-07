@@ -1,2 +1,32 @@
-node_modules
-dist
+# dependencies
+node_modules/
+
+# desktop build output
+dist/
+out/
+
+# android
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/keystore/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# logs & temp
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# local screenshots
+shot-*.png
+android-*.png
+crop-*.png
+selftest*
+
+# workspace memory
+.workbuddy/
